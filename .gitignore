@@ -1,0 +1,20 @@
+# Data used to train the models
+data/
+
+# experiments notebook
+experiments/
+
+# Evaluation results
+evaluation/
+
+# The models
+model/
+
+## docs
+docs/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Apple's metadata files
+.DS_Store
