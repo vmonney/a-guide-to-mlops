@@ -1,15 +1,5 @@
-# Data used to train the models
-data/raw/
-data/prepared/
-
 # experiments notebook
 experiments/
-
-# Evaluation results
-evaluation/
-
-# The models
-model/
 
 ## docs
 docs/
@@ -19,3 +9,8 @@ __pycache__/
 
 # Apple's metadata files
 .DS_Store
+
+## DVC
+
+# DVC will add new files after this lineg
+/model
