@@ -22,6 +22,7 @@ cycler==0.11.0
 debugpy==1.6.7
 decorator==5.1.1
 defusedxml==0.7.1
+dvc==3.2.2
 executing==1.2.0
 fastjsonschema==2.17.1
 flatbuffers==23.5.26
