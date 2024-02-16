@@ -1,114 +1,55 @@
 # Celestial Body Classification: A Guide to MLOps with DVC
 
-Welcome to an advanced guide on implementing Machine Learning Operations (MLOps) with a focus on Data Version Control (DVC) for the classification of celestial bodies. This repository, part of [A Guide to MLOps](https://swiss-ai-center.github.io/a-guide-to-mlops/), is designed to showcase best practices in managing and versioning datasets and machine learning models.
+Welcome to an advanced guide on implementing Machine Learning Operations (MLOps) for the classification of celestial bodies. This repository, part of [A Guide to MLOps](https://swiss-ai-center.github.io/a-guide-to-mlops/), is designed to showcase best practices in managing and versioning datasets and machine learning models.
 
 ## Overview
 
-Incorporating DVC into our MLOps workflow allows for efficient data management, ensuring reproducibility and traceability of data and models. This project aims to give recommendations to the process of setting up DVC, versioning your data and models, and integrating these practices into a seamless MLOps workflow.
+This MLOps workflow leverages the strengths of DVC for data and model versioning, Git for code management, and FastAPI for serving models, facilitated by MLEM for seamless model management. It supports a comprehensive cycle of preparing data, training models, evaluating performance, and serving predictions, all within a version-controlled, collaborative, and reproducible environment. Continuous integration and deployment processes ensure that model improvements are systematically reviewed and integrated, enhancing the model's reliability and performance over time.
+
 
 ### Workflow Diagram
 
-![MLOps Workflow Diagram with DVC](img/mlops_diagram.png)
+![MLOps Workflow Diagram with DVC](img/mermaid-diagram-mlops-workflow.png)
 
-flowchart TB
-    dot_dvc[(.dvc)] -->|dvc push| s3_storage[(S3 Storage)]
-    s3_storage -->|dvc pull| dot_dvc
-    dot_git[(.git)] -->|git push| gitGraph[Git Remote]
-    gitGraph -->|git pull| dot_git
-    workspaceGraph <-....-> dot_git
-    data[data/raw] <-.-> dot_dvc
-    subgraph remoteGraph[REMOTE]
-        s3_storage
-        subgraph gitGraph[Git Remote]
-            repository[(Repository)] --> action[Action]
-            action -->|dvc pull| action_data[data/raw]
-            action_data -->|dvc repro| action_out[metrics & plots]
-            action_out -->|cml publish| pr[Pull Request]
-            pr --> repository
-        end
-    end
-    subgraph cacheGraph[CACHE]
-        dot_dvc
-        dot_git
-    end
-    subgraph workspaceGraph[WORKSPACE]
-        prepare[prepare.py] <-.-> dot_dvc
-        train[train.py] <-.-> dot_dvc
-        evaluate[evaluate.py] <-.-> dot_dvc
-        data --> prepare
-        subgraph dvcGraph["dvc.yaml (dvc repro)"]
-            prepare --> train
-            train --> evaluate
-        end
-        params[params.yaml] -.- prepare
-        params -.- train
-        params <-.-> dot_dvc
-        subgraph mlemGraph[.mlem.yaml]
-            mlem[model.mlem]
-            fastapi[FastAPI] <--> mlem
-        end
-        mlem <-.-> dot_git
-        dvcGraph --> mlem
-    end
-    subgraph browserGraph[BROWSER]
-        localhost <--> fastapi
-    end
-    style pr opacity:0.4,color:#7f7f7f80
-    style workspaceGraph opacity:0.4,color:#7f7f7f80
-    style dvcGraph opacity:0.4,color:#7f7f7f80
-    style cacheGraph opacity:0.4,color:#7f7f7f80
-    style data opacity:0.4,color:#7f7f7f80
-    style dot_git opacity:0.4,color:#7f7f7f80
-    style dot_dvc opacity:0.4,color:#7f7f7f80
-    style prepare opacity:0.4,color:#7f7f7f80
-    style train opacity:0.4,color:#7f7f7f80
-    style evaluate opacity:0.4,color:#7f7f7f80
-    style params opacity:0.4,color:#7f7f7f80
-    style s3_storage opacity:0.4,color:#7f7f7f80
-    style repository opacity:0.4,color:#7f7f7f80
-    style action opacity:0.4,color:#7f7f7f80
-    style action_data opacity:0.4,color:#7f7f7f80
-    style action_out opacity:0.4,color:#7f7f7f80
-    style remoteGraph opacity:0.4,color:#7f7f7f80
-    style gitGraph opacity:0.4,color:#7f7f7f80
-    style mlem opacity:0.4,color:#7f7f7f80
-    linkStyle 0 opacity:0.4,color:#7f7f7f80
-    linkStyle 1 opacity:0.4,color:#7f7f7f80
-    linkStyle 2 opacity:0.4,color:#7f7f7f80
-    linkStyle 3 opacity:0.4,color:#7f7f7f80
-    linkStyle 4 opacity:0.4,color:#7f7f7f80
-    linkStyle 5 opacity:0.4,color:#7f7f7f80
-    linkStyle 6 opacity:0.4,color:#7f7f7f80
-    linkStyle 7 opacity:0.4,color:#7f7f7f80
-    linkStyle 8 opacity:0.4,color:#7f7f7f80
-    linkStyle 9 opacity:0.4,color:#7f7f7f80
-    linkStyle 10 opacity:0.4,color:#7f7f7f80
-    linkStyle 11 opacity:0.4,color:#7f7f7f80
-    linkStyle 12 opacity:0.4,color:#7f7f7f80
-    linkStyle 13 opacity:0.4,color:#7f7f7f80
-    linkStyle 14 opacity:0.4,color:#7f7f7f80
-    linkStyle 15 opacity:0.4,color:#7f7f7f80
-    linkStyle 16 opacity:0.4,color:#7f7f7f80
-    linkStyle 17 opacity:0.4,color:#7f7f7f80
-    linkStyle 18 opacity:0.4,color:#7f7f7f80
-    linkStyle 19 opacity:0.4,color:#7f7f7f80
-    linkStyle 20 opacity:0.4,color:#7f7f7f80
-    linkStyle 21 opacity:0.4,color:#7f7f7f80
-    linkStyle 22 opacity:0.4,color:#7f7f7f80
-    
+Here’s a summarized explanation of how this workflow operates:
 
-The diagram above provides a visual representation of my MLOps workflow, enhanced with DVC for data and model versioning. The workflow includes:
+### Data and Model Management with DVC
 
-1. **Data Preparation**: Utilizing DVC to version and manage datasets.
-2. **Model Training**: Training models with versioned data.
-3. **Model Evaluation**: Evaluating model performance with traceability to specific data versions.
+- **DVC Storage**: The `.dvc` directory works in conjunction with S3 Storage to manage datasets and model artifacts. `dvc push` uploads data and models to S3 Storage for versioning and backup, while `dvc pull` retrieves them into the local `.dvc` directory for use or further development.
+- **Version Control with Git**: The `.git` directory interacts with a Git remote repository. Changes in the project (code, models, and configurations) are pushed to the Git remote for version control and collaboration, and updates can be pulled from the remote repository into the local workspace.
+
+### Workflow in the Workspace
+
+- **Experimentation and Model Development**: The workspace involves several key scripts and configurations:
+  - `prepare.py` for data preprocessing.
+  - `train.py` for model training.
+  - `evaluate.py` for model evaluation.
+  These scripts interact with both the `.dvc` for data/model artifacts and `.git` for tracking changes.
+- **Parameter Management**: `params.yaml` is used to store and manage parameters that influence the preparation, training, and evaluation steps. It's version-controlled with DVC and Git to ensure reproducibility.
+
+### Remote Operations and Continuous Machine Learning (CML)
+
+- **Remote Storage and Versioning**: A remote setup is outlined involving S3 Storage for data/models and Git Remote for code and configuration. This enables a distributed environment where data, models, and code can be shared and versioned.
+- **Continuous Integration and Deployment (CI/CD)**: The workflow includes an automated process where:
+  - An action in the Git repository triggers `dvc pull` to retrieve the latest data and models.
+  - `dvc repro` is used to rerun the experiments, generating new metrics and plots.
+  - Results are published to a pull request (PR) via CML, allowing for review and collaboration before changes are merged into the main repository.
+
+### Model Serving
+
+- **MLEM for Model Management**: `.mlem.yaml` configures how models are managed and served, integrating with FastAPI to create a REST API for model inference.
+- **FastAPI for Serving**: The model is served locally via FastAPI, providing endpoints for interaction, such as model predictions. This setup allows for easy testing and interaction with the model through a web browser.
+
 
 ## Getting Started
 
 ### Prerequisites
 
 - Python 3
-- DVC (You can install DVC via pip: `pip install dvc` or follow the [official installation guide](https://dvc.org/doc/install)).
+- tensorflow
+- DVC 
+- MLEM 
+- fastAPI
 
 ### Installation
 
@@ -120,6 +61,7 @@ The diagram above provides a visual representation of my MLOps workflow, enhance
 3. Initialize DVC:
    ```bash
    dvc init
+   mlem init
    ```
 
 
