@@ -1,0 +1,14 @@
+image_name: mlops-classifier
+image_uri: mlops-classifier:latest
+namespace: live
+object_type: deployment
+registry:
+  host: europe-west6-docker.pkg.dev/a-guide-to-mlops-414215/mlops-registry
+  type: remote
+server:
+  type: fastapi
+service_type:
+  type: loadbalancer
+state_manager:
+  uri: gs://mlopsdemo
+type: kubernetes

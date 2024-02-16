@@ -1,3 +1,5 @@
 core:
+  state:
+    uri: gs://mlopsdemo
   storage:
     type: dvc
